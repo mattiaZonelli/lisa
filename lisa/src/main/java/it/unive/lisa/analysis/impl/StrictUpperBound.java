@@ -15,8 +15,7 @@ import java.util.*;
 import static java.util.Collections.copy;
 
 
-public class StrictUpperBound
-        extends FunctionalLattice<StrictUpperBound, String, UpperBounds>
+public class StrictUpperBound extends FunctionalLattice<StrictUpperBound, String, UpperBounds>
         implements ValueDomain<StrictUpperBound> {
 
 

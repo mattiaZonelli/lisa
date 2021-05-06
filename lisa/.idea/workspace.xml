@@ -4,7 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="05dd61cb-1bec-400a-9016-19eca29fb08f" name="Default Changelist" comment="" />
+    <list default="true" id="05dd61cb-1bec-400a-9016-19eca29fb08f" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/it/unive/lisa/analysis/impl/Pentagons.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/it/unive/lisa/analysis/impl/Pentagons.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/it/unive/lisa/analysis/impl/StrictUpperBound.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/it/unive/lisa/analysis/impl/StrictUpperBound.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/it/unive/lisa/SubTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/it/unive/lisa/SubTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/it/unive/lisa/analysis/impl/types/FloatType.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/it/unive/lisa/analysis/impl/types/InferredTypesTest.java" beforeDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -64,6 +71,9 @@
     <property name="settings.editor.selected.configurable" value="project.propVCSSupport.Mappings" />
   </component>
   <component name="RecentsManager">
+    <key name="CreateClassDialog.RecentsKey">
+      <recent name="it.unive.lisa.analysis.impl" />
+    </key>
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$" />
       <recent name="$PROJECT_DIR$/src/test/java/it/unive/lisa" />
