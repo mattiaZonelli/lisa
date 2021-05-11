@@ -6,7 +6,7 @@ import it.unive.lisa.symbolic.value.Identifier;
 import java.util.HashSet;
 import java.util.Set;
 
-public class UpperBounds extends InverseSetLattice<UpperBounds, String> {
+public class UpperBounds extends InverseSetLattice<UpperBounds, Identifier> {
 
 
     private final boolean isTop;
@@ -17,11 +17,11 @@ public class UpperBounds extends InverseSetLattice<UpperBounds, String> {
      *
 
      */
-    public UpperBounds(Set<String> elements) {
+    public UpperBounds(Set<Identifier> elements) {
         this(elements, false, false);
     }
 
-    private UpperBounds(Set<String> elements, boolean isTop, boolean isBottom) {
+    private UpperBounds(Set<Identifier> elements, boolean isTop, boolean isBottom) {
         super(elements);
         this.isTop = isTop;
         this.isBottom = isBottom;
@@ -48,7 +48,7 @@ public class UpperBounds extends InverseSetLattice<UpperBounds, String> {
     }
 
     @Override
-    protected UpperBounds mk(Set<String> set) {
+    protected UpperBounds mk(Set<Identifier> set) {
         return new UpperBounds(set);
     }
 }

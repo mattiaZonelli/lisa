@@ -5,17 +5,17 @@ import it.unive.lisa.analysis.StatementStore;
 import it.unive.lisa.analysis.lattices.FunctionalLattice;
 import it.unive.lisa.analysis.value.ValueDomain;
 import it.unive.lisa.program.cfg.ProgramPoint;
-import it.unive.lisa.symbolic.value.Identifier;
-import it.unive.lisa.symbolic.value.ValueExpression;
+import it.unive.lisa.symbolic.value.*;
 import it.unive.lisa.analysis.impl.UpperBounds;
-import jdk.swing.interop.SwingInterOpUtils;
+
 
 import java.util.*;
 
 import static java.util.Collections.copy;
 
 
-public class StrictUpperBound extends FunctionalLattice<StrictUpperBound, String, UpperBounds>
+public class StrictUpperBound
+        extends FunctionalLattice<StrictUpperBound, Identifier, UpperBounds>
         implements ValueDomain<StrictUpperBound> {
 
 
@@ -28,7 +28,7 @@ public class StrictUpperBound extends FunctionalLattice<StrictUpperBound, String
         this.function = mkNewFunction(null);
     }
 
-    private StrictUpperBound(UpperBounds lattice, Map<String, UpperBounds> function) {
+    private StrictUpperBound(UpperBounds lattice, Map<Identifier, UpperBounds> function) {
         super(lattice);
         this.function = mkNewFunction(function);
     }
@@ -58,7 +58,7 @@ public class StrictUpperBound extends FunctionalLattice<StrictUpperBound, String
     @Override
     public StrictUpperBound assign(Identifier id, ValueExpression expression, ProgramPoint pp) throws SemanticException {
         if (pp.toString().contains("=")) {
-            if (!function.containsKey(id.toString())) function.put(id.toString(), lattice.top());
+            if (!function.containsKey(id)) function.put(id, lattice.top());
             //System.out.println("TEST assign "+ expression.toString());
         }
         System.out.println("ASSIGN: " + pp + "; " + function.entrySet());
@@ -85,89 +85,110 @@ public class StrictUpperBound extends FunctionalLattice<StrictUpperBound, String
         return true;
     }
 
+
+
     @Override
     public StrictUpperBound assume(ValueExpression expression, ProgramPoint pp) throws SemanticException {
-        if (expression.toString().contains("<") || expression.toString().contains(">")) {
-            String tmp = expression.toString().replaceAll("vid", "");
-            if (expression.toString().contains("!"))
-                tmp = tmp.replace("!", "");
-            String[] expr = tmp.split(" ");
 
-            String sx, dx;
-            if (expression.toString().contains("<")){
-                // "x < y"
-                sx = expr[0];
-                dx = expr[2];
-            }else{
-                // "x > y"
-                sx = expr[2];
-                dx = expr[0];
-            }
-            // controllo che x e y siano variabili
-            if (!isNumeric(sx) && !isNumeric(dx)){
-                HashSet<String> hs = new HashSet<>();
-                if (expression.toString().contains("!")) {
-                    if (function.get(sx).contains(dx)){
-                        // se il Sub è solo la variabile dx allora empty set e quindi TOP
-                        if (function.get(sx).elements().toArray().length == 1) function.replace(sx, lattice.top());
-                        else {
-                            // se ho altre variabili oltre a dx allora le copio tutte tranne quella
-                            for (String ub : function.get(sx).elements()){
-                                if (!ub.equals(dx)) hs.add(ub);
+        if (expression instanceof BinaryExpression) {
+
+                BinaryExpression binaryExpression = (BinaryExpression) expression;
+                if (binaryExpression.getLeft() instanceof Identifier && binaryExpression.getRight() instanceof Identifier) {
+                    // caso < or > or <= or >=
+                    if (binaryExpression.getOperator() == BinaryOperator.COMPARISON_GT ||
+                            binaryExpression.getOperator() == BinaryOperator.COMPARISON_LT ||
+                            binaryExpression.getOperator() == BinaryOperator.COMPARISON_GE ||
+                            binaryExpression.getOperator() == BinaryOperator.COMPARISON_LE) {
+
+                        Identifier sx, dx;
+                        if (binaryExpression.getOperator() == BinaryOperator.COMPARISON_LT ||
+                                binaryExpression.getOperator() == BinaryOperator.COMPARISON_LE) {
+                            // "x < y" or "x <= y"
+                            sx = (Identifier) binaryExpression.getLeft();
+                            dx = (Identifier) binaryExpression.getRight();
+                        } else {
+                            // "x > y" or "x >= y"
+                            sx = (Identifier) binaryExpression.getRight();
+                            dx = (Identifier) binaryExpression.getLeft();
+                        }
+
+                        if (sx.equals(dx)) {
+                            forgetIdentifier(sx);
+                            function.put(sx, lattice.bottom());
+
+                            System.out.println("ASSUME: " + expression + " " + function.entrySet());
+                            return new StrictUpperBound(lattice, function);
+                        }
+
+                        // procedo con le modifiche della function
+                        HashSet<Identifier> hs = new HashSet<>();
+                        // se il SUB di x non è vuoto e quindi TOP, mi devo creare un nuovo Set per gli upperBounds di x
+                        if (!function.get(sx).toString().contains("#TOP#")) {
+                            // se il Sub di x aveva già delle varibili
+                            for (Identifier ub : function.get(sx).elements()) {
+                                hs.add(ub);
                             }
-                            function.replace(sx, new UpperBounds(hs));
                         }
-                    }
-                    //function.replace(expr[0], lattice.top()); // da controllare
-                }else{
-                    // se ho una relazione del tipo: x < y
-                    if (!function.get(sx).toString().contains("#TOP#")){
 
-                        // se il Sub di x aveva già delle varibili
-                        for (String ub : function.get(sx).elements()){
-                            hs.add(ub);
+                        // x -> s(x) U {y},
+                        // se ho x < y devo aggiungere anche y all sub di x
+                        if (binaryExpression.getOperator() == BinaryOperator.COMPARISON_GT ||
+                                binaryExpression.getOperator() == BinaryOperator.COMPARISON_LT) {
+                            hs.add(dx);
                         }
-                    }
-                    //lattice.elements().add(dx);
-                    hs.add(dx);
-                    function.replace(sx, new UpperBounds(hs));
-                    //function.replace(expr[2], lattice.top()); // forse da togliere
-                }
 
-                // bottomizzazione
-                if (function.containsKey(dx)) {
-                    if (function.get(sx).elements().contains(dx) && function.get(dx).elements().contains(sx)) {
-                        function.replace(sx, lattice.bottom());
-                        function.replace(dx, lattice.bottom());
+                        // x -> s(x) U s(y)
+                        if (!function.get(dx).toString().contains("#TOP#")) {
+                            // se il Sub di y aveva già delle varibili
+                            for (Identifier ub : function.get(dx).elements()) {
+                                hs.add(ub);
+                            }
+                        }
+
+                        //se ho qualcosa da aggiungere al sub di sx allora lo modifico, sennò no
+                        if (!hs.isEmpty()) function.replace(sx, new UpperBounds(hs));
+
+                        // bottomizzazione ---> da qualche problema anche senza la distinzione tra false e true branches
+                        //if (function.containsKey(dx)) {
+                            if (function.get(sx).contains(dx) && function.get(dx).contains(sx)) {
+                                function.replace(sx, lattice.bottom());
+                                function.replace(dx, lattice.bottom());
+                            }
+                        //}
+
+                        System.out.println("ASSUME: " + expression + " " + function.entrySet());
+                        return new StrictUpperBound(lattice, function);
                     }
                 }
-                System.out.println("ASSUME: " + expression + function.entrySet());
-                return new StrictUpperBound(lattice, function);
 
             }
 
 
-
+        if (expression instanceof UnaryExpression) {
+            BinaryExpression binaryExpression = (BinaryExpression)((UnaryExpression) expression).getExpression();
+            function.replace((Identifier) binaryExpression.getLeft(), lattice.bottom());
+            System.out.println("UNARY: " + expression + " " + function.entrySet());
         }
-        //return this;
+
         return new StrictUpperBound(lattice, function);
     }
 
 
     @Override
     public StrictUpperBound forgetIdentifier(Identifier id) throws SemanticException {
-
+        //System.out.println("FORGET : " + function.keySet() + ", id:  "+ id);
         if (isTop() || isBottom()) {
             //System.out.println("\nFORGET isTop or isBottom");
             //return this;
             return new StrictUpperBound(lattice, function);
         }
-        //System.out.println("FORGET : " + this.function.entrySet());
+
         // devo creare un nuovo Sub senza nessun pair con key = id
-        Map<String, UpperBounds> mappa = new HashMap<>();
-        for (String key : function.keySet()){
-            if( !(key.equals(id.toString())) ) mappa.put(key, function.get(key));
+        Map<Identifier, UpperBounds> mappa = new HashMap<>();
+        for (Identifier key : function.keySet()) {
+            if (!(key.equals(id))) mappa.put(key, function.get(key));
         }
+
         return new StrictUpperBound(lattice, mappa);
         //return this;
 
@@ -194,7 +215,7 @@ public class StrictUpperBound extends FunctionalLattice<StrictUpperBound, String
     @Override
     public String representation() {
         String res = "";
-        for (String i : function.keySet())
+        for (Identifier i : function.keySet())
             res = res + i + " -> " + function.get(i) + "; ";
         System.out.println(res);
         return res;
