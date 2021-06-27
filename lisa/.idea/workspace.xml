@@ -5,12 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="f4a841d5-cb5d-4c62-9b1b-7dfaa4b82694" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/uiDesigner.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/lisa.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/it/unive/lisa/analysis/impl/Pentagons.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/it/unive/lisa/analysis/impl/StrictUpperBound.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/it/unive/lisa/analysis/impl/Pentagons.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/it/unive/lisa/analysis/impl/Pentagons.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/it/unive/lisa/analysis/impl/StrictUpperBound.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/it/unive/lisa/analysis/impl/StrictUpperBound.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/it/unive/lisa/analysis/impl/UpperBounds.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/it/unive/lisa/analysis/impl/UpperBounds.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/test/java/it/unive/lisa/SubTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/it/unive/lisa/SubTest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/upper-bounds.imp" beforeDir="false" afterPath="$PROJECT_DIR$/upper-bounds.imp" afterDir="false" />
@@ -60,7 +58,7 @@
         <option name="executionName" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
         <option name="externalSystemIdString" value="GRADLE" />
-        <option name="scriptParameters" value="--tests &quot;it.unive.lisa.SubTest&quot;" />
+        <option name="scriptParameters" value="--tests &quot;it.unive.lisa.SubTest&quot; --scan" />
         <option name="taskDescriptions">
           <list />
         </option>
@@ -104,5 +102,8 @@
       </map>
     </option>
     <option name="oldMeFiltersMigrated" value="true" />
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/lisa$SubTest.ic" NAME="SubTest Coverage Results" MODIFIED="1620899097725" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
   </component>
 </project>

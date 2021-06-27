@@ -13,19 +13,22 @@ public class UpperBounds extends InverseSetLattice<UpperBounds, Identifier> {
     private final boolean isBottom;
 
     /**
-     * Builds the lattice.
+     * Builds the lattice, with a predefined set
      *
-
      */
     public UpperBounds(Set<Identifier> elements) {
         this(elements, false, false);
     }
 
-    private UpperBounds(Set<Identifier> elements, boolean isTop, boolean isBottom) {
+    /**
+     * Build the lattice in case we want to set the field @isTop or @isBottom.
+     */
+    public UpperBounds(Set<Identifier> elements, boolean isTop, boolean isBottom) {
         super(elements);
         this.isTop = isTop;
         this.isBottom = isBottom;
     }
+
 
     @Override
     public UpperBounds top() {
@@ -34,7 +37,7 @@ public class UpperBounds extends InverseSetLattice<UpperBounds, Identifier> {
 
     @Override
     public UpperBounds bottom() {
-        return new UpperBounds(new HashSet<>(), false, true);
+        return new UpperBounds(elements, false, true);
     }
 
     @Override

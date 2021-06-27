@@ -1,51 +1,51 @@
 package it.unive.lisa.analysis.impl;
 
 import it.unive.lisa.analysis.Lattice;
+import it.unive.lisa.analysis.ScopeToken;
 import it.unive.lisa.analysis.SemanticException;
 import it.unive.lisa.analysis.impl.numeric.Interval;
 import it.unive.lisa.analysis.nonrelational.value.ValueEnvironment;
+import it.unive.lisa.analysis.representation.DomainRepresentation;
+import it.unive.lisa.analysis.representation.StringRepresentation;
 import it.unive.lisa.analysis.value.ValueDomain;
 import it.unive.lisa.program.cfg.ProgramPoint;
 import it.unive.lisa.symbolic.value.Identifier;
+import it.unive.lisa.symbolic.value.NullConstant;
 import it.unive.lisa.symbolic.value.ValueExpression;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 
 public class Pentagons implements ValueDomain<Pentagons> {
-    /*
-        Or fare una variabile Map<String, Interval>
-     */
-    private ValueEnvironment<Interval> intv;
-    private StrictUpperBound sub;
-    boolean isTOP;
-    boolean isBOTTOM;
 
-    public Pentagons(){ this(null, null); }
+    private final ValueEnvironment<Interval> intv;
+    private final StrictUpperBound sub;
+    private final boolean isTOP;
+    private final boolean isBOTTOM;
+
+    public Pentagons() {
+        this(new ValueEnvironment<>(new Interval(), new HashMap<>()), new StrictUpperBound());
+    }
 
     protected Pentagons(ValueEnvironment<Interval> intv, StrictUpperBound sub) {
+        super();
         this.intv = intv;
         this.sub = sub;
         this.isTOP = false;
         this.isBOTTOM = false;
     }
 
-    private Pentagons(ValueEnvironment<Interval> intv, StrictUpperBound sub, boolean isTOP, boolean isBOTTOM) {
-        this.intv = intv;
-        this.sub = sub;
-        this.isTOP = isTOP;
-        this.isBOTTOM = isBOTTOM;
-    }
-
 
     @Override
     public Pentagons top() {
-
-        return new Pentagons(null,null, true, false);
+        return new Pentagons(intv.top(), sub.top());
     }
 
     @Override
     public Pentagons bottom() {
-        return new Pentagons(null,null, false, true);
+        return new Pentagons(intv.bottom(), sub.bottom());
     }
 
     @Override
@@ -54,9 +54,8 @@ public class Pentagons implements ValueDomain<Pentagons> {
     }
 
     @Override
-    public boolean isBottom() {
-        return sub.isBottom() && intv.isBottom();
-    }
+    //public boolean isBottom() { return sub.isBottom() || intv.isBottom(); }
+    public boolean isBottom() { return sub.bottomization() || intv.isBottom(); }
 
     @Override
     public Pentagons lub(Pentagons other) throws SemanticException {
@@ -71,57 +70,78 @@ public class Pentagons implements ValueDomain<Pentagons> {
 
     @Override
     public boolean lessOrEqual(Pentagons other) throws SemanticException {
-        return this.intv.lessOrEqual(other.intv) &&  this.sub.lessOrEqual(other.sub); // da cambiare
+        return this.intv.lessOrEqual(other.intv) && this.sub.lessOrEqual(other.sub); // da cambiare
+    }
+
+    // metodo refine per modificare gli intv in base ai sub, con le glb
+    private Pentagons refine(){
+        Map<Identifier, Interval> result = new HashMap<>();
+        for (Identifier sx : sub.getKeys()){
+            if (sub.getState(sx).isBottom() || sub.getState(sx).isTop()){
+                result.put(sx, intv.getState(sx));
+            }else{
+                for (Identifier dx : sub.getState(sx)){
+
+                    if (!intv.getState(sx).isBottom() && !intv.getState(sx).isTop() && !intv.getState(dx).isBottom() &&
+                        !intv.getState(dx).isTop()){
+                        Integer s_low = intv.getState(sx).getLow();
+                        Integer s_high = intv.getState(sx).getHigh();
+                        Integer d_low = intv.getState(dx).getLow();
+                        Integer d_high = intv.getState(dx).getHigh();
+
+                        if (s_low >= d_low){
+                            result.put(sx, new Interval());
+                        }else if (/*s_low < d_low &&*/ s_high >= d_low){
+                        //}else if (s_low < d_low && s_high >= d_low){
+                            result.put(sx, new Interval(s_low, d_low-1));
+                        }else {
+                            result.put(sx, intv.getState(sx));
+                        }
+                    }else{
+                        result.put(sx, intv.getState(sx));
+                    }
+                }
+            }
+        }
+        //System.out.println("TEST: " + result.toString() + " " + sub.toString());
+        return new Pentagons(new ValueEnvironment<>(new Interval(), result), sub);
     }
 
     @Override
     public Pentagons assign(Identifier id, ValueExpression expression, ProgramPoint pp) throws SemanticException {
-        System.out.println("TEST: "  + ", " + pp);
-        return this;
+        System.out.println("ASSIGN: " + pp );
+        //System.out.println("ASSIGN intv" +  intv.assign(id, expression, pp));
+        //System.out.println("ASSIGN sub" + sub.assign(id, expression, pp));
+        Pentagons pntg = new Pentagons(intv.assign(id, expression, pp), sub.assign(id, expression, pp));
+        return pntg.refine();
         /*
-          x = 4
-          map x-> [intv = [4,4] , sub = {T}]
+          x = 3
+          map x-> [intv = [3,4] , sub = {T}]
          */
-
     }
-    // metodo refine per modificare gli intv in base ai sub, con le glb
 
     @Override
     public Pentagons smallStepSemantics(ValueExpression expression, ProgramPoint pp) throws SemanticException {
-        return this;
+        return new Pentagons(intv, sub);
     }
 
     @Override
     public Pentagons assume(ValueExpression expression, ProgramPoint pp) throws SemanticException {
-        return this;
-        /*
-         x ->( intv = [1,4] )
-         y ->( inv=[2,3])
-         if x < y
-         x ->( intv = [1,2], sub={y} )
-         y ->( inv=[2,3])
-         */
+        System.out.println("ASSUME: " + expression );
+        Pentagons pntg  = new Pentagons(intv, sub.assume(expression, pp));
+        return pntg.refine();
 
-        /*
-
-
-            x -> [intv= [2,4], sub ={T}]
-            y -> [intv = [3,4], sub={T}]
-            if (x < y-1)
-            x -> [intv= [2,2], sub ={y}] ???
-            y -> [intv = [3,4], sub={T}]
-         */
 
     }
 
     @Override
     public Pentagons forgetIdentifier(Identifier id) throws SemanticException {
-        return this;
+        return new Pentagons(intv.forgetIdentifier(id), sub.forgetIdentifier(id));
     }
 
     @Override
     public Pentagons forgetIdentifiers(Collection<Identifier> ids) throws SemanticException {
-        return this;
+        return new Pentagons(intv.forgetIdentifiers(ids), sub.forgetIdentifiers(ids));
     }
 
     @Override
@@ -130,31 +150,28 @@ public class Pentagons implements ValueDomain<Pentagons> {
     }
 
     @Override
-    public String representation() {
+    public Pentagons pushScope(ScopeToken token) throws SemanticException {
+        return new Pentagons(intv.pushScope(token), sub.pushScope(token));
+    }
+
+    @Override
+    public Pentagons popScope(ScopeToken token) throws SemanticException {
+        return new Pentagons(intv.popScope(token), sub.popScope(token));
+    }
+
+    @Override
+    public DomainRepresentation representation() {
         /*
          x ->( intv = [1,4], sub={y} )
          y ->( inv=[2,3])
          */
         if (isTop())
-            return Lattice.TOP_STRING;
-        else if (isBottom())
-            return Lattice.BOTTOM_STRING;
-        return "" + intv.representation() + ", {" + sub.representation() +"} " ;
+            return new StringRepresentation(Lattice.TOP_STRING);
+        else if (isBottom()){
+
+            return new StringRepresentation(Lattice.BOTTOM_STRING);
+        }
+        else
+            return new StringRepresentation("" + intv.representation() + ", {" + sub.representation() + "} ");
     }
 }
-
-/*
-test2() {
-        def x = 0;
-        def i = 1;
-        while ( i < x ){
-            if (i < 0)
-                x = x + 5;
-            else
-                x = x - 100;
-
-            i = i + 1;
-        }
-        return x;
-    }
- */

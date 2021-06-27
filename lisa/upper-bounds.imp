@@ -1,15 +1,12 @@
 class UB {
+
     test1() {
-        def x = 0;
-        def y = 1;
-        if (x < y)
-            x = x+1;
-        if(y < x){
-            def a = 2;
+        def x = 4;
+        def y = x-1;
+        def w = 2;
+        if (w < x){
+            y = y+1;
         }
-
-        return x;
-
+        return y;
     }
-
 }
