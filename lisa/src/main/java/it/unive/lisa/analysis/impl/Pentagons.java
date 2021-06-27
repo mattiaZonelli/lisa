@@ -73,26 +73,29 @@ public class Pentagons implements ValueDomain<Pentagons> {
         return this.intv.lessOrEqual(other.intv) && this.sub.lessOrEqual(other.sub); // da cambiare
     }
 
-    // metodo refine per modificare gli intv in base ai sub, con le glb
+    // function that refin intvs looking at subs
     private Pentagons refine(){
         Map<Identifier, Interval> result = new HashMap<>();
+        // for each identifier in the map (sub environment)
         for (Identifier sx : sub.getKeys()){
             if (sub.getState(sx).isBottom() || sub.getState(sx).isTop()){
                 result.put(sx, intv.getState(sx));
             }else{
+                // for each sub of identifier sx in the map
                 for (Identifier dx : sub.getState(sx)){
-
+                    // if neither intv of sx and dx are top or bottom
                     if (!intv.getState(sx).isBottom() && !intv.getState(sx).isTop() && !intv.getState(dx).isBottom() &&
                         !intv.getState(dx).isTop()){
+                        // we get the bounds of intv of both identifiers sx and dx
                         Integer s_low = intv.getState(sx).getLow();
                         Integer s_high = intv.getState(sx).getHigh();
                         Integer d_low = intv.getState(dx).getLow();
                         Integer d_high = intv.getState(dx).getHigh();
 
+                        // sx < dx, sx->[s_low, s_high], dx->[d_low, d_high]
                         if (s_low >= d_low){
                             result.put(sx, new Interval());
                         }else if (/*s_low < d_low &&*/ s_high >= d_low){
-                        //}else if (s_low < d_low && s_high >= d_low){
                             result.put(sx, new Interval(s_low, d_low-1));
                         }else {
                             result.put(sx, intv.getState(sx));
@@ -109,15 +112,9 @@ public class Pentagons implements ValueDomain<Pentagons> {
 
     @Override
     public Pentagons assign(Identifier id, ValueExpression expression, ProgramPoint pp) throws SemanticException {
-        System.out.println("ASSIGN: " + pp );
-        //System.out.println("ASSIGN intv" +  intv.assign(id, expression, pp));
-        //System.out.println("ASSIGN sub" + sub.assign(id, expression, pp));
+        //System.out.println("ASSIGN: " + pp );
         Pentagons pntg = new Pentagons(intv.assign(id, expression, pp), sub.assign(id, expression, pp));
         return pntg.refine();
-        /*
-          x = 3
-          map x-> [intv = [3,4] , sub = {T}]
-         */
     }
 
     @Override
@@ -127,7 +124,7 @@ public class Pentagons implements ValueDomain<Pentagons> {
 
     @Override
     public Pentagons assume(ValueExpression expression, ProgramPoint pp) throws SemanticException {
-        System.out.println("ASSUME: " + expression );
+        //System.out.println("ASSUME: " + expression );
         Pentagons pntg  = new Pentagons(intv, sub.assume(expression, pp));
         return pntg.refine();
 

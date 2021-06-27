@@ -1,12 +1,16 @@
 class UB {
 
     test1() {
-        def x = 4;
-        def y = x-1;
-        def w = 2;
-        if (w < x){
-            y = y+1;
+        def x = 3;
+        def y = 4;
+        def p = 8;
+        if (y < p){
+            if (x <= y){
+                y = y +1;
+            }
+        }else{
+            y = 1;
         }
-        return y;
+        p = 0;
     }
 }

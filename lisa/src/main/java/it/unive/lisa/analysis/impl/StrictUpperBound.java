@@ -44,7 +44,7 @@ public class StrictUpperBound
     }
 
     public boolean isTop() {
-        return /*lattice.isTop() &&*/ (function == null || function.isEmpty());
+        return lattice.isTop() && (function == null || function.isEmpty());
     }
     
     @Override
@@ -84,14 +84,13 @@ public class StrictUpperBound
                 }else {
                     result_map.put(id, lattice.top());
                 }
-                System.out.println("ASSIGN: " + pp + ", maps: " + function.entrySet() + ", lattice: " + lattice.toString());
+                //System.out.println("ASSIGN: " + pp + ", maps: " + function.entrySet() + ", lattice: " + lattice.toString());
                 return new StrictUpperBound(lattice, result_map);
             }
 
         }
         //System.out.println("ASSIGN: " + pp + "; " + function.entrySet());
-        //return this;
-        return new StrictUpperBound(lattice, function);
+        return new StrictUpperBound(lattice, mkNewFunction(function));
     }
 
     /**
@@ -106,37 +105,42 @@ public class StrictUpperBound
     }
 
     /**
-     *
+     * Firstly we check if the condition is a negation, in this case we remove the negation and we modify the operator to
+     * its opposite. Then, we check if the condition is a Binaryexpression, if so we check if both left and right side are
+     * identifiers and we go to check the following operators: ==, !=, <=, < , >, >=.
      *
      */
-
     @Override
     public StrictUpperBound assume(ValueExpression expression, ProgramPoint pp) throws SemanticException {
 
-        System.out.println("inASSUME: " + expression + ", maps: " + function.entrySet() + ", lattice: " + lattice.toString());
+        //System.out.println("inASSUME: " + expression + ", maps: " + function.entrySet() + ", lattice: " + lattice.toString());
 
 
-        // the the ccondition starts with a negation, remove it and "flip" the sign.
+        // the the condition starts with a negation, remove it and "flip" the sign.
         if (expression instanceof UnaryExpression && ((UnaryExpression) expression).getExpression() instanceof BinaryExpression) {
             expression = expression.removeNegations();
         }
 
-        // if
+        // Binary expression check
         if (expression instanceof BinaryExpression) {
 
             BinaryExpression binaryExpression = (BinaryExpression) expression;
+            // create a new map to store the modifications
             Map<Identifier, UpperBounds>  result_map = mkNewFunction(function);
+            // check if left hand-side and right hand-side are identifiers
             if (binaryExpression.getLeft() instanceof Identifier && binaryExpression.getRight() instanceof Identifier) {
 
                 // case: == then sub of both identifier has to become the union of both.
                 if (binaryExpression.getOperator() == BinaryOperator.COMPARISON_EQ) {
+                    // get the idenfiers
                     Identifier sx = (Identifier) binaryExpression.getLeft();
                     Identifier dx = (Identifier) binaryExpression.getRight();
 
+                    // update the sub(sx) to sub(sx) U sub(dx)
                     result_map.replace(sx, result_map.get(sx).glb(result_map.get(dx)));
+                    // update the sub(dx) to sub(sx) U sub(dx)
                     result_map.replace(dx, result_map.get(sx).glb(result_map.get(dx)));
-
-                    System.out.println("outASSUME: " + expression + " " + result_map.entrySet() + ", " + lattice.toString());
+                    //System.out.println("outASSUME: " + expression + " " + result_map.entrySet() + ", " + lattice.toString());
                     return new StrictUpperBound(lattice, result_map);
                 }
                 // case:  !=, nothing change
@@ -152,6 +156,8 @@ public class StrictUpperBound
                         binaryExpression.getOperator() == BinaryOperator.COMPARISON_GE ||
                         binaryExpression.getOperator() == BinaryOperator.COMPARISON_LE) {
 
+                    // to save the identifier in sx and dx we transform inequalities like > and >= into the equivalent
+                    // form of < and <=, then in sx we save the left hand-side of the operator.
                     Identifier sx, dx;
                     if (binaryExpression.getOperator() == BinaryOperator.COMPARISON_LT ||
                             binaryExpression.getOperator() == BinaryOperator.COMPARISON_LE) {
@@ -164,7 +170,7 @@ public class StrictUpperBound
                         dx = (Identifier) binaryExpression.getLeft();
                     }
 
-                    // "x < x" same identifier in both left and right hand-side of statement.
+                    // "x < x" same identifier in both left and right hand-side of statement, so sub to Bottom.
                     if (sx.equals(dx)
                             && (binaryExpression.getOperator() == BinaryOperator.COMPARISON_GT ||
                             binaryExpression.getOperator() == BinaryOperator.COMPARISON_LT)) {
@@ -172,24 +178,24 @@ public class StrictUpperBound
                     }
 
 
-                    // inizio le modifiche sulla function
+                    // hs is where we save all the new elements we are going to add in sub(sx)
                     HashSet<Identifier> hs = new HashSet<>();
                     //
                     if (!result_map.get(sx).toString().contains("#TOP#")) {
-                        // se il Sub di x aveva già delle varibili
+                        // if Sub(sx) wasn't empty, then put in hs all the variables that were in sub(sx)
                         for (Identifier ub : result_map.get(sx).elements()) {
                             hs.add(ub);
                             //lattice.elements().add(ub);
                         }
                     }
 
-                    // se ho x < y devo aggiungere anche y all sub di x
+                    // if x < y we have to add y all sub(x)
                     if (binaryExpression.getOperator() == BinaryOperator.COMPARISON_GT ||
                             binaryExpression.getOperator() == BinaryOperator.COMPARISON_LT) {
                         hs.add(dx);
                     }
 
-                    // x = s(x) U s(y)
+                    // x = s(x) U s(y), for all the cases
                     if (!result_map.get(dx).toString().contains("#TOP#")) {
                         // se il Sub di y aveva già delle varibili
                         for (Identifier ub : result_map.get(dx).elements()) {
@@ -197,29 +203,26 @@ public class StrictUpperBound
                         }
                     }
 
+                    // if hs has been modified than update sub(sx)
                     if (!hs.isEmpty()) result_map.replace(sx, new UpperBounds(hs));
 
-                    // bottomizzazione
+                    // bottomization
                     if (result_map.containsKey(dx)) {
                         if (result_map.get(sx).elements().contains(dx) && result_map.get(dx).elements().contains(sx)) {
                             result_map.replace(sx, lattice.bottom());
                             result_map.replace(dx, lattice.bottom());
-                            //return new StrictUpperBound(lattice.isBottom(), result_map);
 
                         }
                     }
-                    System.out.println("outASSUME: " + expression + " " + result_map.entrySet() + ", " + lattice.toString());
+                    //System.out.println("outASSUME: " + expression + " " + result_map.entrySet() + ", " + lattice.toString());
                     return new StrictUpperBound(lattice, result_map);
-                    //return new StrictUpperBound(new UpperBounds(hs), function);
                 }
 
             }
 
         }
 
-
-        //return this;
-        return new StrictUpperBound(lattice, function);
+        return new StrictUpperBound(lattice, mkNewFunction(function));
     }
 
 
@@ -227,20 +230,16 @@ public class StrictUpperBound
     public StrictUpperBound forgetIdentifier(Identifier id) throws SemanticException {
         //System.out.println("FORGET : " + function.keySet() + ", id:  "+ id);
         if (isTop() || isBottom()) {
-            //System.out.println("\nFORGET isTop or isBottom");
-            //return this;
-            return new StrictUpperBound(lattice, function);
+            return new StrictUpperBound(lattice, mkNewFunction(function));
         }
 
-        // devo creare un nuovo Sub senza nessun pair con key = id
+        // create a new sub without entries with key == id
         Map<Identifier, UpperBounds> mappa = new HashMap<>();
         for (Identifier key : function.keySet()) {
             if (!(key.equals(id))) mappa.put(key, function.get(key));
         }
 
         return new StrictUpperBound(lattice, mappa);
-        //return this;
-
     }
 
     /**
@@ -257,24 +256,22 @@ public class StrictUpperBound
      */
     @Override
     public Satisfiability satisfies(ValueExpression expression, ProgramPoint pp) throws SemanticException {
-        System.out.println("SATISFIES " + expression);
+        //System.out.println("SATISFIES " + expression);
         return Satisfiability.UNKNOWN;
     }
 
     @Override
     public StrictUpperBound pushScope(ScopeToken token) throws SemanticException {
-        return new StrictUpperBound(lattice, function);
+        return new StrictUpperBound(lattice, mkNewFunction(function));
     }
 
     @Override
     public StrictUpperBound popScope(ScopeToken token) throws SemanticException {
-        return new StrictUpperBound(lattice, function);
+        return new StrictUpperBound(lattice, mkNewFunction(function));
     }
 
     @Override
     public DomainRepresentation representation() {
-
-        // se c'è un bottom nella mappa, return stringa bottom.
         if (bottomization()) return new StringRepresentation(Lattice.BOTTOM_STRING);
         else return new StringRepresentation(function.toString());
     }

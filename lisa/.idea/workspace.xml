@@ -5,12 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="f4a841d5-cb5d-4c62-9b1b-7dfaa4b82694" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/it/unive/lisa/analysis/impl/Pentagons.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/it/unive/lisa/analysis/impl/Pentagons.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/it/unive/lisa/analysis/impl/StrictUpperBound.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/it/unive/lisa/analysis/impl/StrictUpperBound.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/it/unive/lisa/analysis/impl/UpperBounds.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/it/unive/lisa/analysis/impl/UpperBounds.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/it/unive/lisa/SubTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/it/unive/lisa/SubTest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/upper-bounds.imp" beforeDir="false" afterPath="$PROJECT_DIR$/upper-bounds.imp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
