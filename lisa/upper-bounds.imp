@@ -4,13 +4,15 @@ class UB {
         def x = 3;
         def y = 4;
         def p = 8;
-        if (y < p){
-            if (x <= y){
+        if (x < y){
+            if (p <= x){
                 y = y +1;
+            }else{
+                y = y+1;
             }
         }else{
             y = 1;
         }
-        p = 0;
+        return 0;
     }
 }

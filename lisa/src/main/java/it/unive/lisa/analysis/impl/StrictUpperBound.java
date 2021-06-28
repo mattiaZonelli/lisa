@@ -1,4 +1,7 @@
 package it.unive.lisa.analysis.impl;
+/*
+    Coded by Eleonora Garbin 869831, Zonelli Mattia 870038.
+*/
 
 import it.unive.lisa.analysis.Lattice;
 import it.unive.lisa.analysis.ScopeToken;
@@ -113,8 +116,7 @@ public class StrictUpperBound
     @Override
     public StrictUpperBound assume(ValueExpression expression, ProgramPoint pp) throws SemanticException {
 
-        //System.out.println("inASSUME: " + expression + ", maps: " + function.entrySet() + ", lattice: " + lattice.toString());
-
+        System.out.println("inASSUME: " + expression + ", maps: " + function.entrySet() + ", lattice: " + lattice.toString());
 
         // the the condition starts with a negation, remove it and "flip" the sign.
         if (expression instanceof UnaryExpression && ((UnaryExpression) expression).getExpression() instanceof BinaryExpression) {
@@ -140,7 +142,7 @@ public class StrictUpperBound
                     result_map.replace(sx, result_map.get(sx).glb(result_map.get(dx)));
                     // update the sub(dx) to sub(sx) U sub(dx)
                     result_map.replace(dx, result_map.get(sx).glb(result_map.get(dx)));
-                    //System.out.println("outASSUME: " + expression + " " + result_map.entrySet() + ", " + lattice.toString());
+                    System.out.println("outASSUME: " + expression + " " + result_map.entrySet() + ", " + lattice.toString());
                     return new StrictUpperBound(lattice, result_map);
                 }
                 // case:  !=, nothing change
@@ -148,7 +150,6 @@ public class StrictUpperBound
                     System.out.println("outASSUME: " + expression + " " + result_map.entrySet() + ", " + lattice.toString());
                     return new StrictUpperBound(lattice, result_map);
                 }
-
 
                 // cases < or > or <= or >=
                 if (binaryExpression.getOperator() == BinaryOperator.COMPARISON_GT ||
@@ -214,21 +215,24 @@ public class StrictUpperBound
 
                         }
                     }
-                    //System.out.println("outASSUME: " + expression + " " + result_map.entrySet() + ", " + lattice.toString());
+                    System.out.println("outASSUME: " + expression + " " + result_map.entrySet() + ", " + lattice.toString());
                     return new StrictUpperBound(lattice, result_map);
                 }
 
             }
 
         }
-
+        System.out.println("outASSUME: " + expression + " " + function.entrySet() + ", " + lattice.toString());
         return new StrictUpperBound(lattice, mkNewFunction(function));
     }
 
 
+    /**
+     * we remove the entry of the map where the key is equal to the id.
+     */
     @Override
     public StrictUpperBound forgetIdentifier(Identifier id) throws SemanticException {
-        //System.out.println("FORGET : " + function.keySet() + ", id:  "+ id);
+
         if (isTop() || isBottom()) {
             return new StrictUpperBound(lattice, mkNewFunction(function));
         }
@@ -248,7 +252,11 @@ public class StrictUpperBound
     @Override
     public StrictUpperBound forgetIdentifiers(Collection<Identifier> ids) throws SemanticException {
         //System.out.println("FORGET ALL");
-        return new StrictUpperBound(lattice, function);
+        Map<Identifier, UpperBounds> mappa = new HashMap<>();
+        for (Identifier id : ids){
+            mappa.remove(id);
+        }
+        return new StrictUpperBound(lattice, mappa);
     }
 
     /**

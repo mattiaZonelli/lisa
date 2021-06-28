@@ -1,4 +1,7 @@
 package it.unive.lisa.analysis.impl;
+/*
+    Coded by Eleonora Garbin 869831, Zonelli Mattia 870038.
+*/
 
 import it.unive.lisa.analysis.Lattice;
 import it.unive.lisa.analysis.ScopeToken;
@@ -59,7 +62,7 @@ public class Pentagons implements ValueDomain<Pentagons> {
 
     @Override
     public Pentagons lub(Pentagons other) throws SemanticException {
-        // per ogni variabile mappata fare la lub tra this.intv and other.intv , idem per sub
+        // for each variables in the map we do the lub between this.intv and other.intv , idem for sub
         return new Pentagons(this.intv.lub(other.intv), this.sub.lub(other.sub));
     }
 
@@ -68,9 +71,22 @@ public class Pentagons implements ValueDomain<Pentagons> {
         return new Pentagons(this.intv.widening(other.intv), this.sub.widening(other.sub));
     }
 
+    /*
+    * Implementation of second condition in Order operation of Pntg.
+    */
+    public boolean checkOrder(Pentagons other){
+        for (Identifier x : other.sub.getKeys()) {
+            for (Identifier y : other.sub.getState(x)) {
+                if (!(this.sub.getState(x).contains(y) ||
+                        this.intv.getState(x).getHigh() < this.intv.getState(y).getLow() )) return false;
+            }
+        }
+        return true;
+    }
+
     @Override
     public boolean lessOrEqual(Pentagons other) throws SemanticException {
-        return this.intv.lessOrEqual(other.intv) && this.sub.lessOrEqual(other.sub); // da cambiare
+        return this.intv.lessOrEqual(other.intv) && checkOrder(other);
     }
 
     // function that refin intvs looking at subs
@@ -158,10 +174,7 @@ public class Pentagons implements ValueDomain<Pentagons> {
 
     @Override
     public DomainRepresentation representation() {
-        /*
-         x ->( intv = [1,4], sub={y} )
-         y ->( inv=[2,3])
-         */
+
         if (isTop())
             return new StringRepresentation(Lattice.TOP_STRING);
         else if (isBottom()){
